@@ -114,6 +114,7 @@ if __name__ == '__main__':
                 with open(fname, mode = 'w', encoding = 'utf-8') as f:
                     json.dump(obj, f, indent = 4)
 
+                exec(open("todb.py").read())
 
                 #Clear data for the next day
                 sum_for_avg = 0
