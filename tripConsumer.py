@@ -49,6 +49,9 @@ if __name__ == '__main__':
     
     # Process messages
     total_count = 0
+    route_number = 0
+    trip_id = 0
+    vehicle_number = 0
     try:
         while True:
             msg = consumer.poll(1.0)
@@ -77,6 +80,21 @@ if __name__ == '__main__':
                 ser = value['service_key']
                 if ser != 'W' or ser != 'U' or ser != 'S' or ser != 'A':
                     ser = 'W' 
+
+
+                #check that route_id is constant and vehicle number is constant in each trip table
+                #table changed change the values
+                if trip_id != value['trip_id']:
+                    trip_id = value['trip_id']
+                    route_number = value['route_number']
+                    vehicle_number = value['vehicle_number']
+                else:
+                    #if route number is not constant
+                    if route_number != value['route_number']:
+                        value['route_number'] = route_number
+                    #if vehicle number is not constant
+                    if vehicle_number != value['vehicle_number']:
+                        value['vehicle_number'] = vehicle_number
 
     except KeyboardInterrupt:
         pass
