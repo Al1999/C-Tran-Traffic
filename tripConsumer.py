@@ -91,9 +91,11 @@ if __name__ == '__main__':
                 else:
                     #if route number is not constant
                     if route_number != value['route_number']:
+                        print("Route number is not constant", value['route_number'])
                         value['route_number'] = route_number
                     #if vehicle number is not constant
                     if vehicle_number != value['vehicle_number']:
+                        print("Vehicle number is not constant", value['vehicle_number'])
                         value['vehicle_number'] = vehicle_number
 
     except KeyboardInterrupt:
