@@ -25,6 +25,7 @@
 from confluent_kafka import Consumer
 import json
 import ccloud_lib
+import pandas as pd
 
 
 if __name__ == '__main__':
@@ -64,13 +65,21 @@ if __name__ == '__main__':
                 # Check for Kafka message
                 record_key = msg.key()
                 record_value = msg.value()
-                data = json.loads(record_value)
-                s = record_key.decode('UTF-8')
-                print("Consumed record with key {} and value {}, \
-                      and updated total count to {}"
-                      .format(record_key, record_value, total_count))
+                value = json.loads(record_value)
+                #s = record_key.decode('UTF-8')
+
+                #Check if direction is 0 or 1
+                dir = value['direction']
+                if dir  != '1' or dir != '0':
+                    dir = '0'
+
+                #Check Service key is either W or U or ? or ?
+                ser = value['service_key']
+                if ser != 'W' or ser != 'U' or ser != 'S' or ser != 'A':
+                    ser = 'W' 
+
     except KeyboardInterrupt:
         pass
     finally:
         # Leave group and commit final offsets
-       econsumer.close()
+        consumer.close()
