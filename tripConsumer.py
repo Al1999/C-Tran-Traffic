@@ -26,6 +26,8 @@ from confluent_kafka import Consumer
 import json
 import ccloud_lib
 import pandas as pd
+from datetime import date
+import json
 
 
 if __name__ == '__main__':
@@ -52,15 +54,37 @@ if __name__ == '__main__':
     route_number = 0
     trip_id = 0
     vehicle_number = 0
+
+    out = []
+    done = 0
     try:
         while True:
             msg = consumer.poll(1.0)
+            if done == 5 and len(out) >0:
+
+                #file name
+                today = date. today()
+                d3 = today.strftime("%m-%d-%y")
+                name = d3 + 'trips.json'
+                final = json.dumps(out, indent=2)
+
+                #create file
+                file = open(name, 'w')
+                file.close()
+
+                #write out to file
+                with open(name, 'w') as f:
+                    f.write(final)
+
+                out = []
+
             if msg is None:
                 # No message available within timeout.
                 # Initial message consumption may take up to
                 # `session.timeout.ms` for the consumer group to
                 # rebalance and start consuming
                 print("Waiting for message or event/error in poll()")
+                done+=1
                 continue
             elif msg.error():
                 print('error: {}'.format(msg.error()))
@@ -97,6 +121,9 @@ if __name__ == '__main__':
                     if vehicle_number != value['vehicle_number']:
                         print("Vehicle number is not constant", value['vehicle_number'])
                         value['vehicle_number'] = vehicle_number
+
+
+                out.append(value)
 
     except KeyboardInterrupt:
         pass
