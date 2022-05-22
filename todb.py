@@ -42,11 +42,13 @@ def tprow2vals(row):
 
     ret = f"""
        {row['EVENT_NO_TRIP']},            -- trip_id
-       {row['ROUTE']},                    -- route_id
+       {row['route_number']},                    -- route_id
        {row['VEHICLE_ID']},               -- vehicle_id
        '{row["DAYOFWEEK"]}',              -- service_key
-       '{row["DIRE"]}'                    -- direction
+       '{row["direction"]}'                    -- direction
     """
+
+    #direction is different from DIRECTION
 
     return ret
 

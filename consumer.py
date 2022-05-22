@@ -110,10 +110,36 @@ if __name__ == '__main__':
                         if(entry['OPD_DATE'] != date):
                             entry['OPD_DATE'] = date
 
-                #transformation done, dump back to out.json
-                with open(fname, mode = 'w', encoding = 'utf-8') as f:
-                    json.dump(obj, f, indent = 4)
 
+                tname = d3 + 'trips.json'
+                trips = pd.read_json(tname)
+
+                trips = trips.rename(columns={"trip_id": "EVENT_NO_TRIP"})
+                filtered = trips[['EVENT_NO_TRIP', 'service_key', 'direction', 'route_number']].copy()
+                filtered = filtered.drop_duplicates(subset=['EVENT_NO_TRIP'])
+                filtered['EVENT_NO_TRIP'] = filtered['EVENT_NO_TRIP'].astype(str)
+                #integrate breadcrumb with trips
+                new = pd.merge(filtered, data, on='EVENT_NO_TRIP')
+                new.loc[new["direction"] == "0", "direction"] = "Out"
+                new.loc[new["direction"] == "1", "direction"] = "Back"
+                new.loc[new["direction"] == "", "direction"] = "Out"
+
+
+
+                #transformation done, dump back to out.json
+                result = new.to_json(orient="records")
+                parsed = json.loads(result)
+                final = json.dumps(parsed, indent=2)
+
+                #create file
+                file = open(fname, 'w')
+                file.close()
+
+                #write out to file
+                with open(fname, 'w') as f:
+                    f.write(final)
+
+                #Insert into db
                 exec(open("todb.py").read())
 
                 #Clear data for the next day
