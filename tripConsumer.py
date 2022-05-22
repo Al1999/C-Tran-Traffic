@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
                 #Check Service key is either W or U or ? or ?
                 ser = value['service_key']
-                if ser != 'W' or ser != 'U' or ser != 'S' or ser != 'A':
+                if ser != 'W' or ser != 'U' or ser != 'S':
                     ser = 'W' 
 
 
