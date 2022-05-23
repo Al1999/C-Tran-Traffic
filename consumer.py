@@ -114,17 +114,54 @@ if __name__ == '__main__':
                 tname = d3 + 'trips.json'
                 trips = pd.read_json(tname)
 
+                #rename columns to appropiate names
                 trips = trips.rename(columns={"trip_id": "EVENT_NO_TRIP"})
+                trips = trips.rename(columns={"x_coordinate": "GPS_LONGITUDE"})
+                trips = trips.rename(columns={"y_coordinate": "GPS_LATITUDE"})
+                trips = trips.rename(columns={"vehicle_number": "VEHICLE_ID"})
+                #stops dont have direction or velocity
+                trips['DIRECTION'] = 0
+                trips['VELOCITY'] = 0
+
+                trips['ACT_TIME'] = trips['arrive_time']
+
+
+                #transform the time
+                def secondstr(sec, theDate):
+                    sec = int(sec)
+                    timetr = timedelta(seconds=sec)
+                    timetr = str(timetr)
+                    timetr = timetr.replace('0 days', '')
+                    theDate = str(theDate)
+                    theDate = theDate.upper()
+                    return theDate + ' ' + timetr
+
+                trips['ACT_TIME'] = trips.apply(lambda x: secondstr(x.ACT_TIME, x.date), axis=1)
+
+
+                def weekday(key):
+                    if key == 'W':
+                        return 'Weekday'
+                    if key == 'S':
+                        return 'Saturday'
+                    if key == 'U':
+                        return 'Sunday'
+
+                trips['DAYOFWEEK'] = trips.apply(lambda x: weekday(x.service_key), axis=1)
+
+
                 filtered = trips[['EVENT_NO_TRIP', 'service_key', 'direction', 'route_number']].copy()
                 filtered = filtered.drop_duplicates(subset=['EVENT_NO_TRIP'])
                 filtered['EVENT_NO_TRIP'] = filtered['EVENT_NO_TRIP'].astype(str)
                 #integrate breadcrumb with trips
-                new = pd.merge(filtered, data, on='EVENT_NO_TRIP')
+                new = pd.merge(data, filtered, on='EVENT_NO_TRIP', how="left")
                 new.loc[new["direction"] == "0", "direction"] = "Out"
                 new.loc[new["direction"] == "1", "direction"] = "Back"
                 new.loc[new["direction"] == "", "direction"] = "Out"
 
-
+                #add stop events to breadcrumb
+                trips = trips[['EVENT_NO_TRIP', 'ACT_TIME', 'VEHICLE_ID', 'VELOCITY', 'DIRECTION', 'DAYOFWEEK', 'direction', 'GPS_LONGITUDE', 'GPS_LATITUDE']]
+                new = pd.concat([new, trips], ignore_index=True)
 
                 #transformation done, dump back to out.json
                 result = new.to_json(orient="records")
