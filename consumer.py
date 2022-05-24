@@ -112,7 +112,11 @@ if __name__ == '__main__':
 
 
                 tname = d3 + 'trips.json'
-                trips = pd.read_json(tname)
+
+                f = open(tname)
+                trips = json.load(f)
+                f.close()
+                trips = pd.DataFrame(trips)
 
                 #rename columns to appropiate names
                 trips = trips.rename(columns={"trip_id": "EVENT_NO_TRIP"})
@@ -120,11 +124,12 @@ if __name__ == '__main__':
                 trips = trips.rename(columns={"y_coordinate": "GPS_LATITUDE"})
                 trips = trips.rename(columns={"vehicle_number": "VEHICLE_ID"})
                 #stops dont have direction or velocity
-                trips['DIRECTION'] = 0
+                trips['DIRECTION'] = "0"
                 trips['VELOCITY'] = 0
 
                 trips['ACT_TIME'] = trips['arrive_time']
 
+                trips['date'] = trips['date'].astype(str)
 
                 #transform the time
                 def secondstr(sec, theDate):
@@ -132,11 +137,15 @@ if __name__ == '__main__':
                     timetr = timedelta(seconds=sec)
                     timetr = str(timetr)
                     timetr = timetr.replace('0 days', '')
+                    timetr = timetr.replace('1 day,', '')
+                    timetr = timetr.replace('00:00:00','')
+
                     theDate = str(theDate)
+
                     theDate = theDate.upper()
                     return theDate + ' ' + timetr
 
-                trips['ACT_TIME'] = trips.apply(lambda x: secondstr(x.ACT_TIME, x.date), axis=1)
+                trips['ACT_TIME'] = trips.apply(lambda x: secondstr(x.ACT_TIME, x['date']), axis=1)
 
 
                 def weekday(key):
@@ -155,13 +164,16 @@ if __name__ == '__main__':
                 filtered['EVENT_NO_TRIP'] = filtered['EVENT_NO_TRIP'].astype(str)
                 #integrate breadcrumb with trips
                 new = pd.merge(data, filtered, on='EVENT_NO_TRIP', how="left")
-                new.loc[new["direction"] == "0", "direction"] = "Out"
-                new.loc[new["direction"] == "1", "direction"] = "Back"
-                new.loc[new["direction"] == "", "direction"] = "Out"
 
                 #add stop events to breadcrumb
                 trips = trips[['EVENT_NO_TRIP', 'ACT_TIME', 'VEHICLE_ID', 'VELOCITY', 'DIRECTION', 'DAYOFWEEK', 'direction', 'GPS_LONGITUDE', 'GPS_LATITUDE']]
+
                 new = pd.concat([new, trips], ignore_index=True)
+
+                #change direction to string values
+                new.loc[new["direction"] == "0", "direction"] = "Out"
+                new.loc[new["direction"] == "1", "direction"] = "Back"
+                new.loc[new["direction"] == "", "direction"] = "Out"
 
                 #transformation done, dump back to out.json
                 result = new.to_json(orient="records")
@@ -270,14 +282,13 @@ if __name__ == '__main__':
                 entry = {}
                 #put each breadscmp into object
                 entry = value
-                entry.update(ROUTE = "", DAYOFWEEK = "", DIRE = "")
+                entry.update(ROUTE = "", DAYOFWEEK = "")
                 strdow = datetime.datetime.strptime(entry['OPD_DATE'], '%d-%b-%y').strftime('%A')
                 days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
                 if strdow in days:
                     strdow = 'Weekday'
 
                 entry['DAYOFWEEK'] = strdow
-                entry['DIRE'] = "Out"
                 #add to the out
                 out.append(entry)
                 
