@@ -174,6 +174,8 @@ if __name__ == '__main__':
                 new.loc[new["direction"] == "0", "direction"] = "Out"
                 new.loc[new["direction"] == "1", "direction"] = "Back"
                 new.loc[new["direction"] == "", "direction"] = "Out"
+                new.loc[pd.isna(new["direction"]) == True, "direction"] = "Out"
+                new.loc[pd.isna(new["route_number"]) == True, "route_number"] = "-1"
 
                 #transformation done, dump back to out.json
                 result = new.to_json(orient="records")
